@@ -1,94 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TempMail Lite</title>
+  <title>TempMail Inbox</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-    .email-box, .message-box { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 0 10px #ccc; }
-    .email { font-weight: bold; font-size: 18px; }
-    .message { border-top: 1px solid #ddd; padding: 10px 0; cursor: pointer; }
-    .subject { font-weight: bold; }
-    .from { font-size: 14px; color: gray; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .emails {
+      text-align: left;
+      margin-top: 20px;
+    }
+    .email-item {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>TempMail Inbox</h1>
+    <input type="text" id="emailAddress" readonly />
+    <br>
+    <button onclick="generateEmail()">Generate Email</button>
+    <div class="emails" id="inbox">
+      <p><strong>Inbox will show up here...</strong></p>
+    </div>
+  </div>  <script>
+    function generateEmail() {
+      const name = Math.random().toString(36).substring(2, 10);
+      const email = `${name}@1secmail.com`;
+      document.getElementById("emailAddress").value = email;
+      getInbox(name);
+    }
 
-  <div class="email-box">
-    <div>Your Temporary Email:</div>
-    <div class="email" id="email">Loading...</div>
-  </div>
-
-  <div class="message-box">
-    <h3>Inbox</h3>
-    <div id="inbox">Checking messages...</div>
-  </div>
-
-<script>
-let token = "";
-let userId = "";
-let emailAddr = "";
-
-async function createAccount() {
-  const username = Math.random().toString(36).substring(2, 10);
-  const domain = await fetch("https://api.mail.tm/domains").then(r => r.json()).then(d => d["hydra:member"][0].domain);
-  emailAddr = `${username}@${domain}`;
-  document.getElementById("email").innerText = emailAddr;
-
-  const password = "temppass123";
-
-  await fetch("https://api.mail.tm/accounts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ address: emailAddr, password })
-  });
-
-  const login = await fetch("https://api.mail.tm/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ address: emailAddr, password })
-  }).then(r => r.json());
-
-  token = login.token;
-  loadMessages();
-}
-
-async function loadMessages() {
-  const inbox = document.getElementById("inbox");
-  inbox.innerHTML = "Loading...";
-
-  const messages = await fetch("https://api.mail.tm/messages", {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then(r => r.json());
-
-  inbox.innerHTML = "";
-
-  if (messages["hydra:member"].length === 0) {
-    inbox.innerHTML = "<i>No messages yet.</i>";
-    return;
-  }
-
-  messages["hydra:member"].forEach(msg => {
-    const div = document.createElement("div");
-    div.className = "message";
-    div.innerHTML = `<div class="subject">${msg.subject}</div><div class="from">From: ${msg.from.name || ''} &lt;${msg.from.address}&gt;</div>`;
-    div.onclick = () => showMessage(msg.id);
-    inbox.appendChild(div);
-  });
-}
-
-async function showMessage(id) {
-  const message = await fetch(`https://api.mail.tm/messages/${id}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then(r => r.json());
-
-  const inbox = document.getElementById("inbox");
-  inbox.innerHTML = `<h4>${message.subject}</h4><div>From: ${message.from.address}</div><hr><div>${message.text}</div><br><button onclick="loadMessages()">Back</button>`;
-}
-
-createAccount();
-</script>
-
-</body>
+    function getInbox(login) {
+      const domain = "1secmail.com";
+      fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`)
+        .then(response => response.json())
+        .then(data => {
+          const inbox = document.getElementById("inbox");
+          inbox.innerHTML = "";
+          if (data.length === 0) {
+            inbox.innerHTML = "<p>No emails yet.</p>";
+          } else {
+            data.forEach(mail => {
+              const item = document.createElement("div");
+              item.className = "email-item";
+              item.innerHTML = `<strong>From:</strong> ${mail.from}<br><strong>Subject:</strong> ${mail.subject}`;
+              inbox.appendChild(item);
+            });
+          }
+        });
+    }
+  </script></body>
 </html>
