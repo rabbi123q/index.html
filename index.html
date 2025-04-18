@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>TempMail Inbox</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TempMail Inbox with Multiple Domains</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -53,22 +55,32 @@
     <h1>TempMail Inbox</h1>
     <input type="text" id="emailAddress" readonly />
     <br>
+    <select id="domainSelect">
+      <option value="1secmail.com">1secmail.com</option>
+      <option value="smailpro.com">smailpro.com</option>
+    </select>
+    <br><br>
     <button onclick="generateEmail()">Generate Email</button>
+    <button onclick="refreshInbox()">Refresh Inbox</button>
     <div class="emails" id="inbox">
       <p><strong>Inbox will show up here...</strong></p>
     </div>
   </div>
   <script>
+    let currentLogin = "";  // store the email name
+    let currentDomain = "";  // store the selected domain
+
     function generateEmail() {
+      currentDomain = document.getElementById("domainSelect").value;  // Get selected domain
       const name = Math.random().toString(36).substring(2, 10);
-      const email = `${name}@smailpro.com`;
+      const email = `${name}@${currentDomain}`;
+      currentLogin = name;  // save the email name
       document.getElementById("emailAddress").value = email;
-      getInbox(name);
+      getInbox(currentLogin, currentDomain);  // load inbox
     }
 
-    function getInbox(login) {
-      const domain = "smailpro.com";
-      fetch(`https://api.smailpro.com/v1/inbox?login=${login}&domain=${domain}`)
+    function getInbox(login, domain) {
+      fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`)
         .then(response => response.json())
         .then(data => {
           const inbox = document.getElementById("inbox");
@@ -79,11 +91,30 @@
             data.forEach(mail => {
               const item = document.createElement("div");
               item.className = "email-item";
-              item.innerHTML = `<strong>From:</strong> ${mail.from}<br><strong>Subject:</strong> ${mail.subject}`;
+              item.innerHTML = `<strong>From:</strong> ${mail.from}<br><strong>Subject:</strong> ${mail.subject}<br><strong>Body:</strong> ${mail.text}`;
               inbox.appendChild(item);
+
+              // Check for Facebook verification code
+              if(mail.subject.includes("Facebook")) {
+                const verificationCode = mail.text.match(/(\d{6})/);  // Extract 6-digit code
+                if(verificationCode) {
+                  inbox.innerHTML += `<p><strong>Facebook Verification Code:</strong> ${verificationCode[0]}</p>`;
+                }
+              }
             });
           }
+        })
+        .catch(error => {
+          console.error("Error fetching emails:", error);
         });
+    }
+
+    function refreshInbox() {
+      if(currentLogin !== "") {
+        getInbox(currentLogin, currentDomain);  // refresh inbox
+      } else {
+        alert("Please generate an email first!");
+      }
     }
   </script>
 </body>
