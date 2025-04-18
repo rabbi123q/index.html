@@ -1,4 +1,5 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
   <title>TempMail Inbox</title>
   <style>
@@ -56,17 +57,18 @@
     <div class="emails" id="inbox">
       <p><strong>Inbox will show up here...</strong></p>
     </div>
-  </div>  <script>
+  </div>
+  <script>
     function generateEmail() {
       const name = Math.random().toString(36).substring(2, 10);
-      const email = `${name}@1secmail.com`;
+      const email = `${name}@smailpro.com`;
       document.getElementById("emailAddress").value = email;
       getInbox(name);
     }
 
     function getInbox(login) {
-      const domain = "1secmail.com";
-      fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`)
+      const domain = "smailpro.com";
+      fetch(`https://api.smailpro.com/v1/inbox?login=${login}&domain=${domain}`)
         .then(response => response.json())
         .then(data => {
           const inbox = document.getElementById("inbox");
@@ -83,5 +85,6 @@
           }
         });
     }
-  </script></body>
+  </script>
+</body>
 </html>
