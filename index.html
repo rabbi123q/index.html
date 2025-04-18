@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TempMail Lite</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+    .email-box, .message-box { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 0 10px #ccc; }
+    .email { font-weight: bold; font-size: 18px; }
+    .message { border-top: 1px solid #ddd; padding: 10px 0; cursor: pointer; }
+    .subject { font-weight: bold; }
+    .from { font-size: 14px; color: gray; }
+  </style>
+</head>
+<body>
+
+  <div class="email-box">
+    <div>Your Temporary Email:</div>
+    <div class="email" id="email">Loading...</div>
+  </div>
+
+  <div class="message-box">
+    <h3>Inbox</h3>
+    <div id="inbox">Checking messages...</div>
+  </div>
+
+<script>
+let token = "";
+let userId = "";
+let emailAddr = "";
+
+async function createAccount() {
+  const username = Math.random().toString(36).substring(2, 10);
+  const domain = await fetch("https://api.mail.tm/domains").then(r => r.json()).then(d => d["hydra:member"][0].domain);
+  emailAddr = `${username}@${domain}`;
+  document.getElementById("email").innerText = emailAddr;
+
+  const password = "temppass123";
+
+  await fetch("https://api.mail.tm/accounts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ address: emailAddr, password })
+  });
+
+  const login = await fetch("https://api.mail.tm/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ address: emailAddr, password })
+  }).then(r => r.json());
+
+  token = login.token;
+  loadMessages();
+}
+
+async function loadMessages() {
+  const inbox = document.getElementById("inbox");
+  inbox.innerHTML = "Loading...";
+
+  const messages = await fetch("https://api.mail.tm/messages", {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(r => r.json());
+
+  inbox.innerHTML = "";
+
+  if (messages["hydra:member"].length === 0) {
+    inbox.innerHTML = "<i>No messages yet.</i>";
+    return;
+  }
+
+  messages["hydra:member"].forEach(msg => {
+    const div = document.createElement("div");
+    div.className = "message";
+    div.innerHTML = `<div class="subject">${msg.subject}</div><div class="from">From: ${msg.from.name || ''} &lt;${msg.from.address}&gt;</div>`;
+    div.onclick = () => showMessage(msg.id);
+    inbox.appendChild(div);
+  });
+}
+
+async function showMessage(id) {
+  const message = await fetch(`https://api.mail.tm/messages/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(r => r.json());
+
+  const inbox = document.getElementById("inbox");
+  inbox.innerHTML = `<h4>${message.subject}</h4><div>From: ${message.from.address}</div><hr><div>${message.text}</div><br><button onclick="loadMessages()">Back</button>`;
+}
+
+createAccount();
+</script>
+
+</body>
+</html>
