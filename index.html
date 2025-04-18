@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TempMail Inbox</title>
+    <title>rabbi</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>TempMail Inbox</h1>
+        <h1>rabbi</h1>
         <input type="text" id="emailAddress" readonly />
         <br>
         <button onclick="generateEmail()">Generate Email</button>
@@ -80,13 +80,13 @@
         function generateEmail() {
             const name = 'rabbi' + Math.random().toString(36).substring(2, 10); // Email starts with 'rabbi'
             emailLogin = name;
-            const email = `${name}@1secmail.com`; // You can change this to another domain like mailinator.com, temp-mail.org, etc.
+            const email = `${name}@mailinator.com`; // Change domain as required: mailinator.com, temp-mail.org, 1secmail.com, guerrillamail.com
             document.getElementById("emailAddress").value = email;
             getInbox(emailLogin);
         }
 
         function getInbox(login) {
-            const domain = "1secmail.com"; // Change this to mailinator.com or any other supported domain.
+            const domain = "mailinator.com"; // Change domain to temp-mail.org, 1secmail.com, guerrillamail.com as per your requirement.
             fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`)
                 .then(response => response.json())
                 .then(data => {
