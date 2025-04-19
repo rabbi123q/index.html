@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rabbi</title>
+    <title>TempMail Inbox (Mail.tm)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -48,28 +48,15 @@
             padding: 10px;
             border-bottom: 1px solid #ccc;
         }
-        .copy-btn {
-            padding: 5px 10px;
-            margin-top: 10px;
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .copy-btn:hover {
-            background-color: #0b7dda;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>rabbi</h1>
+        <h1>TempMail Inbox (Mail.tm)</h1>
         <input type="text" id="emailAddress" readonly />
         <br>
         <button onclick="generateEmail()">Generate Email</button>
         <button onclick="refreshInbox()">Refresh Inbox</button>
-        <button class="copy-btn" onclick="copyEmail()">Copy Email</button>
         <div class="emails" id="inbox">
             <p><strong>Inbox will show up here...</strong></p>
         </div>
@@ -77,43 +64,67 @@
 
     <script>
         let emailLogin = '';
+        let apiUrl = 'https://api.mail.tm';
+
         function generateEmail() {
-            const name = 'rabbi' + Math.random().toString(36).substring(2, 10); // Email starts with 'rabbi'
-            emailLogin = name;
-            const email = `${name}@mailinator.com`; // Change domain as required: mailinator.com, temp-mail.org, 1secmail.com, guerrillamail.com
-            document.getElementById("emailAddress").value = email;
-            getInbox(emailLogin);
+            fetch(`${apiUrl}/token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: 'your-api-username',
+                    password: 'your-api-password'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const token = data.token;
+                fetch(`${apiUrl}/domains`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(domains => {
+                    const emailDomain = domains[0]; // Select the first domain
+                    emailLogin = 'temp' + Math.random().toString(36).substring(2, 10);
+                    const email = `${emailLogin}@${emailDomain}`;
+                    document.getElementById("emailAddress").value = email;
+                    getInbox(token, emailLogin, emailDomain);
+                });
+            });
         }
 
-        function getInbox(login) {
-            const domain = "mailinator.com"; // Change domain to temp-mail.org, 1secmail.com, guerrillamail.com as per your requirement.
-            fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`)
-                .then(response => response.json())
-                .then(data => {
-                    const inbox = document.getElementById("inbox");
-                    inbox.innerHTML = "";
-                    if (data.length === 0) {
-                        inbox.innerHTML = "<p>No emails yet.</p>";
-                    } else {
-                        data.forEach(mail => {
-                            const item = document.createElement("div");
-                            item.className = "email-item";
-                            item.innerHTML = `<strong>From:</strong> ${mail.from}<br><strong>Subject:</strong> ${mail.subject}<br><strong>Body:</strong> ${mail.text}`;
-                            inbox.appendChild(item);
-                        });
-                    }
-                });
+        function getInbox(token, login, domain) {
+            fetch(`${apiUrl}/messages?recipient=${login}@${domain}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const inbox = document.getElementById("inbox");
+                inbox.innerHTML = "";
+                if (data.length === 0) {
+                    inbox.innerHTML = "<p>No emails yet.</p>";
+                } else {
+                    data.forEach(mail => {
+                        const item = document.createElement("div");
+                        item.className = "email-item";
+                        item.innerHTML = `<strong>From:</strong> ${mail.from}<br><strong>Subject:</strong> ${mail.subject}<br><strong>Body:</strong> ${mail.text}`;
+                        inbox.appendChild(item);
+                    });
+                }
+            });
         }
 
         function refreshInbox() {
-            getInbox(emailLogin);
-        }
-
-        function copyEmail() {
-            const email = document.getElementById("emailAddress").value;
-            navigator.clipboard.writeText(email).then(() => {
-                alert('Email copied to clipboard!');
-            });
+            if (emailLogin !== '') {
+                getInbox(token, emailLogin, emailDomain);
+            }
         }
 
         setInterval(function() {
