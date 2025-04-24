@@ -1,130 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temp Mail Inbox</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .email {
-            padding: 10px;
-            margin: 10px 0;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-        }
-        .email .subject {
-            font-weight: bold;
-        }
-        .email .time {
-            font-size: 0.9em;
-            color: #555;
-        }
-        .button {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Temp Mail Inbox</title>
+  <style>
+    body { font-family: sans-serif; background: #f2f2f2; padding: 20px; }
+    #inbox { margin-top: 20px; }
+    .email { background: #fff; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+    button { padding: 10px 15px; font-size: 16px; margin-top: 10px; }
+  </style>
 </head>
 <body>
+  <h2>Temp Mail Inbox (mail.gw API)</h2>
+  <div>Email: <span id="email"></span></div>
+  <div>Password: <span id="password"></span></div>
+  <button onclick="loadInbox()">Refresh Inbox</button>
+  <div id="inbox">Loading...</div>
 
-<div class="container">
-    <h1>Temp Mail Inbox</h1>
-    <button class="button" onclick="fetchEmails()">Refresh Inbox</button>
-    
-    <div id="emails-container">
-        <!-- Emails will appear here -->
-    </div>
-</div>
+  <script>
+    let token = "";
+    let userId = "";
+    let email = "";
+    let password = "";
 
-<script>
-// Fetching inbox emails using Mail.tm API
-const apiUrl = 'https://api.mail.tm/messages'; // Mail.tm API URL
-let email = ''; // Store the generated email address here
+    async function createAccount() {
+      const domainsRes = await fetch("https://api.mail.gw/domains");
+      const domains = await domainsRes.json();
+      const domain = domains["hydra:member"][0].domain;
+      const username = "u" + Math.floor(Math.random() * 999999);
+      email = username + "@" + domain;
+      password = "Test@123";
 
-// Function to create a new temporary email
-async function createEmail() {
-    const response = await fetch('https://api.mail.tm/accounts', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            address: `tempuser${Math.floor(Math.random() * 10000)}@mail.tm`, // Random email address
-            password: 'yourpassword123'
-        })
-    });
+      await fetch("https://api.mail.gw/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: email, password: password })
+      });
 
-    const data = await response.json();
-    email = data.address; // Store generated email address
-    document.getElementById('emails-container').innerHTML = `<p>Temporary Email Created: ${email}</p>`;
-    return email;
-}
+      const loginRes = await fetch("https://api.mail.gw/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: email, password: password })
+      });
+      const loginData = await loginRes.json();
+      token = loginData.token;
 
-// Function to fetch emails from the generated temporary email
-async function fetchEmails() {
-    if (!email) {
-        await createEmail(); // Create a new email if not already created
+      document.getElementById("email").innerText = email;
+      document.getElementById("password").innerText = password;
+
+      loadInbox();
     }
 
-    const response = await fetch(`${apiUrl}/${email}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + 'your_api_token_here' // Add your API token here
-        }
-    });
-
-    const data = await response.json();
-    displayEmails(data);
-}
-
-// Function to display fetched emails in the container
-function displayEmails(emails) {
-    const emailsContainer = document.getElementById('emails-container');
-    emailsContainer.innerHTML = ''; // Clear the previous content
-
-    if (emails && emails.length > 0) {
-        emails.forEach(email => {
-            const emailDiv = document.createElement('div');
-            emailDiv.classList.add('email');
-            emailDiv.innerHTML = `
-                <div class="subject">Subject: ${email.subject}</div>
-                <div class="time">Received: ${email.date}</div>
-                <p>Verification Code: <b>${email.body}</b></p>
-            `;
-            emailsContainer.appendChild(emailDiv);
-        });
-    } else {
-        emailsContainer.innerHTML = '<p>No emails found.</p>';
+    async function loadInbox() {
+      const inbox = document.getElementById("inbox");
+      inbox.innerHTML = "Loading...";
+      const res = await fetch("https://api.mail.gw/messages", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const data = await res.json();
+      inbox.innerHTML = "";
+      data["hydra:member"].forEach(msg => {
+        const div = document.createElement("div");
+        div.className = "email";
+        div.innerHTML = `<strong>From:</strong> ${msg.from.address}<br>
+                         <strong>Subject:</strong> ${msg.subject}<br>
+                         <strong>Time:</strong> ${msg.createdAt}`;
+        inbox.appendChild(div);
+      });
     }
-}
 
-// Call fetchEmails when the page loads
-fetchEmails();
-</script>
-
+    createAccount();
+  </script>
 </body>
 </html>
