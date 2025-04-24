@@ -1,110 +1,201 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temp Mail Inbox</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .email {
-            padding: 10px;
-            margin: 10px 0;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-        }
-        .email .subject {
-            font-weight: bold;
-        }
-        .email .time {
-            font-size: 0.9em;
-            color: #555;
-        }
-        .refresh-btn {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .refresh-btn:hover {
-            background-color: #45a049;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>Temp Mail Inbox</h1>
-    <div id="inbox"></div>
-    <button class="refresh-btn" onclick="refreshInbox()">Refresh Inbox</button>
-</div>
-
-<script>
-    const apiUrl = 'https://api.mail.tm'; // Mail.tm API Base URL
-    let apiToken = 'your_api_token_here'; // Replace with your API token
-    let mailboxId = 'your_mailbox_id_here'; // Replace with your Mailbox ID
-
-    // Function to fetch inbox messages
-    function fetchInbox() {
-        fetch(`${apiUrl}/messages`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${apiToken}`
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            let inboxHtml = '';
-            data['hydra:member'].forEach(email => {
-                const subject = email.subject || 'No Subject';
-                const receivedTime = new Date(email.date).toLocaleTimeString();
-                const verificationCode = extractVerificationCode(email.text);
-
-                inboxHtml += `
-                    <div class="email">
-                        <div class="subject">Subject: ${subject}</div>
-                        <div class="time">Received: ${receivedTime}</div>
-                        <p>Verification Code: <b>${verificationCode}</b></p>
-                    </div>
-                `;
-            });
-            document.getElementById('inbox').innerHTML = inboxHtml;
-        })
-        .catch(error => console.error('Error fetching inbox:', error));
+{
+  "id": "string",
+  "token":"string"
+}"Authorization":"Bearer TOKEN"{
+  "hydra:member": [
+    {
+      "@id": "string",
+      "@type": "string",
+      "@context": "string",
+      "id": "string",
+      "domain": "string",
+      "isActive": true,
+      "isPrivate": true,
+      "createdAt": "2022-04-01T00:00:00.000Z",
+      "updatedAt": "2022-04-01T00:00:00.000Z"
     }
-
-    // Function to extract verification code from email text
-    function extractVerificationCode(emailText) {
-        const codeMatch = emailText.match(/\d{6}/); // Regex to extract 6-digit code
-        return codeMatch ? codeMatch[0] : 'Not Found';
+  ],
+  "hydra:totalItems": 0,
+  "hydra:view": {
+    "@id": "string",
+    "@type": "string",
+    "hydra:first": "string",
+    "hydra:last": "string",
+    "hydra:previous": "string",
+    "hydra:next": "string"
+  },
+  "hydra:search": {
+    "@type": "string",
+    "hydra:template": "string",
+    "hydra:variableRepresentation": "string",
+    "hydra:mapping": [
+      {
+        "@type": "string",
+        "variable": "string",
+        "property": "string",
+        "required": true
+      }
+    ]
+  }
+}"user@"+domains[0]['domain']
+{
+  "@id": "string",
+  "@type": "string",
+  "@context": "string",
+  "id": "string",
+  "domain": "string",
+  "isActive": true,
+  "isPrivate": true,
+  "createdAt": "2022-04-01T00:00:00.000Z",
+  "updatedAt": "2022-04-01T00:00:00.000Z"
+}
+{"@context": "string",
+  "@id": "string",
+  "@type": "string",
+  "id": "string",
+  "address": "user@example.com",
+  "quota": 0,
+  "used": 0,
+  "isDisabled": true,
+  "isDeleted": true,
+  "createdAt": "2022-04-01T00:00:00.000Z",
+  "updatedAt": "2022-04-01T00:00:00.000Z"
+}{
+  "@context": "string",
+  "@id": "string",
+  "@type": "string",
+  "id": "string",
+  "address": "user@example.com",
+  "quota": 0,
+  "used": 0,
+  "isDisabled": true,
+  "isDeleted": true,
+  "createdAt": "2022-04-01T00:00:00.000Z",
+  "updatedAt": "2022-04-01T00:00:00.000Z"
+}{
+  "@context": "string",
+  "@id": "string",
+  "@type": "string",
+  "id": "string",
+  "address": "user@example.com",
+  "quota": 0,
+  "used": 0,
+  "isDisabled": true,
+  "isDeleted": true,
+  "createdAt": "2022-04-01T00:00:00.000Z",
+  "updatedAt": "2022-04-01T00:00:00.000Z"
+}{
+  "hydra:member": [
+    {
+      "@id": "string",
+      "@type": "string",
+      "@context": "string",
+      "id": "string",
+      "accountId": "string",
+      "msgid": "string",
+      "from": {
+          "name": "string",
+          "address": "string"
+      },
+      "to": [
+        {
+            "name": "string",
+            "address": "string"
+        }
+      ],
+      "subject": "string",
+      "intro": "string",
+      "seen": true,
+      "isDeleted": true,
+      "hasAttachments": true,
+      "size": 0,
+      "downloadUrl": "string",
+      "createdAt": "2022-04-01T00:00:00.000Z",
+      "updatedAt": "2022-04-01T00:00:00.000Z"
     }
-
-    // Refresh inbox function
-    function refreshInbox() {
-        fetchInbox();
+  ],
+  "hydra:totalItems": 0,
+  "hydra:view": {
+    "@id": "string",
+    "@type": "string",
+    "hydra:first": "string",
+    "hydra:last": "string",
+    "hydra:previous": "string",
+    "hydra:next": "string"
+  },
+  "hydra:search": {
+    "@type": "string",
+    "hydra:template": "string",
+    "hydra:variableRepresentation": "string",
+    "hydra:mapping": [
+      {
+        "@type": "string",
+        "variable": "string",
+        "property": "string",
+        "required": true
+      }
+    ]
+  }
+}{
+  "@context": "string",
+  "@id": "string",
+  "@type": "string",
+  "id": "string",
+  "accountId": "string",
+  "msgid": "string",
+    "from": {
+        "name": "string",
+      "address": "string"
+  },
+  "to": [
+        {
+            "name": "string",
+            "address": "string"
+        }
+    ],
+  "cc": [
+    "string"
+  ],
+  "bcc": [
+    "string"
+  ],
+  "subject": "string",
+  "seen": true,
+  "flagged": true,
+  "isDeleted": true,
+  "verifications": [
+    "string"
+  ],
+  "retention": true,
+  "retentionDate": "2022-04-01T00:00:00.000Z",
+  "text": "string",
+  "html": [
+    "string"
+  ],
+  "hasAttachments": true,
+  "attachments": [
+    {
+      "id": "string",
+      "filename": "string",
+      "contentType": "string",
+      "disposition": "string",
+      "transferEncoding": "string",
+      "related": true,
+      "size": 0,
+      "downloadUrl": "string"
     }
-
-    // Initial inbox fetch on page load
-    fetchInbox();
-</script>
-
-</body>
-</html>
+  ],
+  "size": 0,
+  "downloadUrl": "string",
+  "createdAt": "2022-04-01T00:00:00.000Z",
+  "updatedAt": "2022-04-01T00:00:00.000Z"
+}{
+  "seen": true
+}{
+  "@context": "string",
+  "@id": "string",
+  "@type": "string",
+  "id": "string",
+  "downloadUrl": "string",
+  "data": "string"
+}
