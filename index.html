@@ -1,79 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Temp Mail Inbox</title>
-  <style>
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-    .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
-    h2 { text-align: center; }
-    .email { padding: 10px; margin: 10px 0; background: #eaeaea; border-radius: 6px; }
-    .email p { margin: 5px 0; }
-    .email strong { color: #333; }
-    #email-address { text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 15px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temp Mail Inbox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .email {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+        }
+        .email .subject {
+            font-weight: bold;
+        }
+        .email .time {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .refresh-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .refresh-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Temp Mail Inbox (Mail.tm)</h2>
-    <div id="email-address">Loading email...</div>
-    <div id="inbox">Fetching inbox...</div>
-  </div>
 
-  <script>
-    const api = 'https://api.mail.tm';
-    let token = '';
-    let email = 'user' + Math.floor(Math.random() * 100000) + '@mail.tm';
-    let password = 'test123456';
+<div class="container">
+    <h1>Temp Mail Inbox</h1>
+    <div id="inbox"></div>
+    <button class="refresh-btn" onclick="refreshInbox()">Refresh Inbox</button>
+</div>
 
-    async function createAccount() {
-      await fetch(api + '/accounts', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({address: email, password})
-      }).catch(() => {});
+<script>
+    const apiUrl = 'https://api.mail.tm'; // Mail.tm API Base URL
+    let apiToken = 'your_api_token_here'; // Replace with your API token
+    let mailboxId = 'your_mailbox_id_here'; // Replace with your Mailbox ID
+
+    // Function to fetch inbox messages
+    function fetchInbox() {
+        fetch(`${apiUrl}/messages`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${apiToken}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            let inboxHtml = '';
+            data['hydra:member'].forEach(email => {
+                const subject = email.subject || 'No Subject';
+                const receivedTime = new Date(email.date).toLocaleTimeString();
+                const verificationCode = extractVerificationCode(email.text);
+
+                inboxHtml += `
+                    <div class="email">
+                        <div class="subject">Subject: ${subject}</div>
+                        <div class="time">Received: ${receivedTime}</div>
+                        <p>Verification Code: <b>${verificationCode}</b></p>
+                    </div>
+                `;
+            });
+            document.getElementById('inbox').innerHTML = inboxHtml;
+        })
+        .catch(error => console.error('Error fetching inbox:', error));
     }
 
-    async function getToken() {
-      const res = await fetch(api + '/token', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({address: email, password})
-      });
-      const data = await res.json();
-      token = data.token;
+    // Function to extract verification code from email text
+    function extractVerificationCode(emailText) {
+        const codeMatch = emailText.match(/\d{6}/); // Regex to extract 6-digit code
+        return codeMatch ? codeMatch[0] : 'Not Found';
     }
 
-    async function getInbox() {
-      const res = await fetch(api + '/messages', {
-        headers: { Authorization: 'Bearer ' + token }
-      });
-      const data = await res.json();
-      const inboxDiv = document.getElementById('inbox');
-      inboxDiv.innerHTML = '';
-      if (data['hydra:member'].length === 0) {
-        inboxDiv.innerHTML = '<p>No messages yet. Wait for Facebook code...</p>';
-      } else {
-        data['hydra:member'].forEach(msg => {
-          inboxDiv.innerHTML += `
-            <div class="email">
-              <p><strong>Subject:</strong> ${msg.subject}</p>
-              <p><strong>From:</strong> ${msg.from.address}</p>
-              <p><strong>Time:</strong> ${msg.intro}</p>
-            </div>
-          `;
-        });
-      }
+    // Refresh inbox function
+    function refreshInbox() {
+        fetchInbox();
     }
 
-    async function start() {
-      await createAccount();
-      await getToken();
-      document.getElementById('email-address').innerText = `Email: ${email}`;
-      setInterval(getInbox, 5000); // check inbox every 5 seconds
-    }
+    // Initial inbox fetch on page load
+    fetchInbox();
+</script>
 
-    start();
-  </script>
 </body>
 </html>
