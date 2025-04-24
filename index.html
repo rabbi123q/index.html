@@ -1,64 +1,75 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Temp Mail Inbox</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
-    .container { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
-    .email { padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-    .subject { font-weight: bold; }
-    .refresh-btn { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    .refresh-btn:hover { background: #0056b3; }
+    body { font-family: sans-serif; background: #f2f2f2; padding: 20px; }
+    #inbox { margin-top: 20px; }
+    .email { background: #fff; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+    button { padding: 10px 15px; font-size: 16px; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Temp Mail Inbox - inboxbear.com</h1>
-    <p>Email: <strong>revrbtb@inboxbear.com</strong></p>
-    <button class="refresh-btn" onclick="fetchInbox()">Refresh ইনবক্স</button>
-    <div id="inbox"></div>
-  </div>
+  <h2>Temp Mail Inbox (mail.gw API)</h2>
+  <div>Email: <span id="email"></span></div>
+  <div>Password: <span id="password"></span></div>
+  <button onclick="loadInbox()">Refresh Inbox</button>
+  <div id="inbox">Loading...</div>
 
   <script>
-    const email = "revrbtb@inboxbear.com";
-    const password = "rabbipass"; // optional if you want to login
-    const api = "https://api.mail.gw";
+    let token = "";
+    let userId = "";
+    let email = "";
+    let password = "";
 
-    async function fetchInbox() {
-      document.getElementById("inbox").innerHTML = "Loading...";
-      try {
-        const resToken = await fetch(api + "/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: email, password: password })
-        });
-        const dataToken = await resToken.json();
-        const token = dataToken.token;
+    async function createAccount() {
+      const domainsRes = await fetch("https://api.mail.gw/domains");
+      const domains = await domainsRes.json();
+      const domain = "inboxbear.com";  // Changed to the desired domain
+      const username = "u" + Math.floor(Math.random() * 999999);
+      email = username + "@" + domain;
+      password = "Test@123";
 
-        const resInbox = await fetch(api + "/messages", {
-          headers: { Authorization: "Bearer " + token }
-        });
-        const inboxData = await resInbox.json();
+      await fetch("https://api.mail.gw/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: email, password: password })
+      });
 
-        let inboxHTML = "";
-        inboxData["hydra:member"].forEach(msg => {
-          inboxHTML += `<div class="email">
-            <div class="subject">Subject: ${msg.subject}</div>
-            <div>From: ${msg.from.address}</div>
-            <div>Preview: ${msg.intro}</div>
-            <div>Time: ${new Date(msg.createdAt).toLocaleString()}</div>
-          </div>`;
-        });
-        document.getElementById("inbox").innerHTML = inboxHTML || "No messages yet.";
-      } catch (err) {
-        document.getElementById("inbox").innerHTML = "Error loading inbox.";
-        console.error(err);
-      }
+      const loginRes = await fetch("https://api.mail.gw/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: email, password: password })
+      });
+      const loginData = await loginRes.json();
+      token = loginData.token;
+
+      document.getElementById("email").innerText = email;
+      document.getElementById("password").innerText = password;
+
+      loadInbox();
     }
 
-    fetchInbox(); // Load inbox on page load
+    async function loadInbox() {
+      const inbox = document.getElementById("inbox");
+      inbox.innerHTML = "Loading...";
+      const res = await fetch("https://api.mail.gw/messages", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const data = await res.json();
+      inbox.innerHTML = "";
+      data["hydra:member"].forEach(msg => {
+        const div = document.createElement("div");
+        div.className = "email";
+        div.innerHTML = `<strong>From:</strong> ${msg.from.address}<br>
+                         <strong>Subject:</strong> ${msg.subject}<br>
+                         <strong>Time:</strong> ${msg.createdAt}`;
+        inbox.appendChild(div);
+      });
+    }
+
+    createAccount();
   </script>
 </body>
 </html>
