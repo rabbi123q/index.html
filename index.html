@@ -26,7 +26,7 @@
     async function createAccount() {
       const domainsRes = await fetch("https://api.mail.gw/domains");
       const domains = await domainsRes.json();
-      const domain = "inboxbear.com";  // Changed to the desired domain
+      const domain = domains["hydra:member"][0].domain;
       const username = "u" + Math.floor(Math.random() * 999999);
       email = username + "@" + domain;
       password = "Test@123";
