@@ -1,63 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Rabbi's TempMail</title>
-  <meta http-equiv="refresh" content="5"> <!-- auto refresh every 5 sec -->
+  <title>Temp Mail Inbox</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 700px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    .email {
-      background: #e8f0fe;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-    }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
+    h2 { text-align: center; }
+    .email { padding: 10px; margin: 10px 0; background: #eaeaea; border-radius: 6px; }
+    .email p { margin: 5px 0; }
+    .email strong { color: #333; }
+    #email-address { text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 15px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>rabbi</h1>
-    <div id="inbox">
-      <div class="email">Loading inbox...</div>
-    </div>
+    <h2>Temp Mail Inbox (Mail.tm)</h2>
+    <div id="email-address">Loading email...</div>
+    <div id="inbox">Fetching inbox...</div>
   </div>
 
   <script>
-    // এখানে আপনি API থেকে মেইল নিতে পারেন (যেমন mail.tm বা 1secmail এর API)
-    // নিচেরটা শুধু ডিজাইন দেখানোর জন্য
+    const api = 'https://api.mail.tm';
+    let token = '';
+    let email = 'user' + Math.floor(Math.random() * 100000) + '@mail.tm';
+    let password = 'test123456';
 
-    // উদাহরণ ডেটা
-    const sampleEmails = [
-      { subject: "Facebook Code: 123456", body: "Your Facebook code is 123456" },
-      { subject: "Welcome to TempMail", body: "Thanks for using our service!" }
-    ];
+    async function createAccount() {
+      await fetch(api + '/accounts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({address: email, password})
+      }).catch(() => {});
+    }
 
-    const inboxDiv = document.getElementById('inbox');
-    inboxDiv.innerHTML = '';
+    async function getToken() {
+      const res = await fetch(api + '/token', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({address: email, password})
+      });
+      const data = await res.json();
+      token = data.token;
+    }
 
-    sampleEmails.forEach(mail => {
-      const div = document.createElement('div');
-      div.className = 'email';
-      div.innerHTML = `<strong>${mail.subject}</strong><br>${mail.body}`;
-      inboxDiv.appendChild(div);
-    });
+    async function getInbox() {
+      const res = await fetch(api + '/messages', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      const inboxDiv = document.getElementById('inbox');
+      inboxDiv.innerHTML = '';
+      if (data['hydra:member'].length === 0) {
+        inboxDiv.innerHTML = '<p>No messages yet. Wait for Facebook code...</p>';
+      } else {
+        data['hydra:member'].forEach(msg => {
+          inboxDiv.innerHTML += `
+            <div class="email">
+              <p><strong>Subject:</strong> ${msg.subject}</p>
+              <p><strong>From:</strong> ${msg.from.address}</p>
+              <p><strong>Time:</strong> ${msg.intro}</p>
+            </div>
+          `;
+        });
+      }
+    }
+
+    async function start() {
+      await createAccount();
+      await getToken();
+      document.getElementById('email-address').innerText = `Email: ${email}`;
+      setInterval(getInbox, 5000); // check inbox every 5 seconds
+    }
+
+    start();
   </script>
 </body>
 </html>
